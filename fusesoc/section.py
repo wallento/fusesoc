@@ -148,6 +148,11 @@ class MainSection(Section):
         self._add_member('simulators' , SimulatorList, "Supported simulators. Valid values are icarus, modelsim, verilator, isim and xsim. Each simulator have a dedicated section desribed elsewhere in this document")
         self._add_member('patches'    , StringList, "FuseSoC-specific patches")
 
+        self._add_member('vendor'     , str, "Vendor of this core")
+        self._add_member('library'    , str, "Library this core is in")
+        self._add_member('name'       , str, "Name of this core")
+        self._add_member('version'    , str, "Version of this core")
+
         if items:
             self.load_dict(items)
 

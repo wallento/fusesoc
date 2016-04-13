@@ -39,6 +39,12 @@ class Core:
         self.provider = None
         self.system   = None
 
+        self.vendor = ""
+        self.library = ""
+        self.corename = ""
+        self.version = ""
+        self.name = ""
+
         for s in section.SECTION_MAP:
             assert(not hasattr(self, s))
             if(section.SECTION_MAP[s].named):
@@ -52,7 +58,6 @@ class Core:
         self.export_files = []
         if core_file:
 
-            self.name = basename.split('.core')[0]
             config = FusesocConfigParser(core_file)
 
             #FIXME : Make simulators part of the core object
@@ -67,6 +72,39 @@ class Core:
                     setattr(self, s.TAG, s)
             self.depend     = self.main.depend
             self.simulators = self.main.simulators
+
+            # Extract all parts of the name for the different ways to provide it
+            if self.main.name:
+                (self.vendor, self.library, self.corename, self.version) = splitNameString(self.main.name)
+            else:
+                self.corename = basename.split('.core')[0]
+
+            if self.main.vendor:
+                if self.vendor:
+                    utils.pr_warn("vendor was already specified as part of the name, ignoring")
+                else:
+                    self.vendor = self.main.vendor
+
+            if self.main.library:
+                if self.library:
+                    utils.pr_warn("library was already specified as part of the name, ignoring")
+                else:
+                    self.library = self.main.library
+
+            if self.main.version:
+                if self.version:
+                    utils.pr_warn("version was already specified as part of the name, ignoring")
+                else:
+                    self.version = self.main.version
+
+            # Assemble the full name
+            if self.vendor:
+                self.name += self.vendor + ":"
+            if self.library:
+                self.name += self.library + ":"
+            self.name += self.corename
+            if self.version:
+                self.name += "@" + self.version
 
             self._collect_filesets()
 
@@ -278,3 +316,17 @@ class Core:
                     print("  {} {} {}".format(f.name.ljust(_longest_name),
                                               f.file_type.ljust(_longest_type),
                                               f.is_include_file))
+
+def splitNameString(name):
+    (fullname,at,version) = name.partition("@")
+    (vendor,colon,library) = fullname.partition(":")
+    if library:
+        (library,colon,corename) = library.partition(":")
+        if not corename:
+            corename = library
+            library = ""
+    else:
+        corename = vendor
+        vendor = ""
+        library = ""
+    return (vendor,library,corename,version)
