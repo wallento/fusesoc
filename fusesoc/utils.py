@@ -125,6 +125,20 @@ def check_systemc_env():
 
     return os.path.isdir(systemc_libdir) is True and os.path.isdir(systemc_include) is True
 
+def splitNameString(name):
+    (fullname,at,version) = name.partition("@")
+    (vendor,colon,library) = fullname.partition(":")
+    if library:
+        (library,colon,corename) = library.partition(":")
+        if not corename:
+            corename = library
+            library = ""
+    else:
+        corename = vendor
+        vendor = ""
+        library = ""
+    return (vendor,library,corename,version)
+
 #Copied from http://twistedmatrix.com/trac/browser/tags/releases/twisted-8.2.0/twisted/python/procutils.py
 
 #Permission is hereby granted, free of charge, to any person obtaining

@@ -3,6 +3,7 @@ from fusesoc.fusesocconfigparser import FusesocConfigParser
 from fusesoc.config import Config
 import os
 import logging
+from fusesoc.utils import splitNameString
 
 logger = logging.getLogger(__name__)
 
@@ -65,17 +66,3 @@ class System:
     def info(self):
         print("\nSYSTEM INFO")
         print(self.backend)
-
-def splitNameString(name):
-    (fullname,at,version) = name.partition("@")
-    (vendor,colon,library) = fullname.partition(":")
-    if library:
-        (library,colon,corename) = library.partition(":")
-        if not corename:
-            corename = library
-            library = ""
-    else:
-        corename = vendor
-        vendor = ""
-        library = ""
-    return (vendor,library,corename,version)
