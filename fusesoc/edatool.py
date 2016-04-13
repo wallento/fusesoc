@@ -15,6 +15,7 @@ else:
 from fusesoc.config import Config
 from fusesoc.coremanager import CoreManager
 from fusesoc.utils import pr_info
+from fusesoc.utils import sanitizeName
 
 class FileAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
@@ -28,7 +29,8 @@ class EdaTool(object):
     def __init__(self, system):
         config = Config()
         self.system = system
-        self.build_root = os.path.join(config.build_root, self.system.name)
+        sanitized = sanitizeName(self.system.name)
+        self.build_root = os.path.join(config.build_root, sanitized)
         self.src_root = os.path.join(self.build_root, 'src')
 
         self.cm = CoreManager()
@@ -50,7 +52,7 @@ class EdaTool(object):
         for name in self.cores:
             pr_info("Preparing " + name)
             core = self.cm.get_core(name)
-            dst_dir = os.path.join(Config().build_root, self.system.name, 'src', name)
+            dst_dir = os.path.join(Config().build_root, self.system.sanitized_name, 'src', core.sanitized_name)
             try:
                 core.setup()
             except URLError as e:

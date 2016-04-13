@@ -3,7 +3,7 @@ from fusesoc.fusesocconfigparser import FusesocConfigParser
 from fusesoc.config import Config
 import os
 import logging
-from fusesoc.utils import splitNameString
+from fusesoc.utils import splitNameString, sanitizeName
 
 logger = logging.getLogger(__name__)
 
@@ -62,6 +62,8 @@ class System:
         self.name += self.systemname
         if self.version:
             self.name += "@" + self.version
+
+        self.sanitized_name = sanitizeName(self.name)
 
     def info(self):
         print("\nSYSTEM INFO")

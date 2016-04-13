@@ -139,6 +139,9 @@ def splitNameString(name):
         library = ""
     return (vendor,library,corename,version)
 
+def sanitizeName(name):
+    return name.replace(":", "_")
+
 #Copied from http://twistedmatrix.com/trac/browser/tags/releases/twisted-8.2.0/twisted/python/procutils.py
 
 #Permission is hereby granted, free of charge, to any person obtaining

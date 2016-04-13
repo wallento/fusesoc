@@ -69,11 +69,11 @@ class Vivado(Backend):
                 vhdl.append(s.name)
 
         # Write the formatted string to the tcl file
-        tcl_file = open(os.path.join(self.work_root, self.system.name+".tcl"), 'w')
+        tcl_file = open(os.path.join(self.work_root, self.system.sanitized_name+".tcl"), 'w')
         tcl_file.write(PROJECT_TCL_TEMPLATE.format(
-            design       = self.system.name,
+            design       = self.system.sanitized_name,
             part         = self.system.backend.part,
-            bitstream    = os.path.join(self.work_root, self.system.name+'.bit'),
+            bitstream    = os.path.join(self.work_root, self.system.sanitized_name+'.bit'),
             incdirs      = ' '.join(incdirs),
             ip_files     = '\n'.join(['read_ip '+s for s in ip]),
             src_files    = '\n'.join(['read_verilog '+s for s in verilog]+
@@ -90,7 +90,7 @@ class Vivado(Backend):
         super(Vivado, self).build(args)
 
         utils.Launcher('vivado', ['-mode', 'batch', '-source',
-                                  os.path.join(self.work_root, self.system.name+'.tcl')],
+                                  os.path.join(self.work_root, self.system.sanitized_name+'.tcl')],
                        cwd = self.work_root,
                        errormsg = "Failed to build FPGA bitstream").run()
         
@@ -103,7 +103,7 @@ class Vivado(Backend):
     executed in Vivado's batch mode.
     """
     def pgm(self, remaining):
-        tcl_file_name = os.path.join(self.work_root, self.system.name+"_pgm.tcl")
+        tcl_file_name = os.path.join(self.work_root, self.system.sanitized_name+"_pgm.tcl")
         self._write_program_tcl_file(tcl_file_name)
         utils.Launcher('vivado', ['-mode', 'batch', '-source', tcl_file_name ],
                        cwd = self.work_root,
@@ -113,7 +113,7 @@ class Vivado(Backend):
     def _write_program_tcl_file(self, program_tcl_filename):
         tcl_file = open(program_tcl_filename, 'w')
         tcl_file.write(PROGRAM_TCL_TEMPLATE.format(
-            bitstream    = os.path.join(self.work_root, self.system.name+'.bit'),
+            bitstream    = os.path.join(self.work_root, self.system.sanitized_name+'.bit'),
             hw_device = self.system.backend.hw_device
         ))
         tcl_file.close()

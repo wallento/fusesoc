@@ -12,7 +12,7 @@ from fusesoc.config import Config
 from fusesoc.fusesocconfigparser import FusesocConfigParser
 from fusesoc.plusargs import Plusargs
 from fusesoc.system import System
-from fusesoc.system import splitNameString
+from fusesoc.utils import splitNameString, sanitizeName
 
 logger = logging.getLogger(__name__)
 
@@ -45,6 +45,7 @@ class Core:
         self.corename = ""
         self.version = ""
         self.name = ""
+        self.sanitized_name = ""
 
         for s in section.SECTION_MAP:
             assert(not hasattr(self, s))
@@ -106,6 +107,8 @@ class Core:
             self.name += self.corename
             if self.version:
                 self.name += "@" + self.version
+
+            self.sanitized_name = sanitizeName(self.name)
 
             self._collect_filesets()
 
