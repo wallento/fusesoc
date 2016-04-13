@@ -12,6 +12,7 @@ from fusesoc.config import Config
 from fusesoc.fusesocconfigparser import FusesocConfigParser
 from fusesoc.plusargs import Plusargs
 from fusesoc.system import System
+from fusesoc.system import splitNameString
 
 logger = logging.getLogger(__name__)
 
@@ -131,7 +132,8 @@ class Core:
             for f in self.main.component:
                 self._parse_component(os.path.join(self.files_root, f))
 
-            system_file = os.path.join(self.core_root, self.name+'.system')
+            (base, ext) = os.path.splitext(basename)
+            system_file = os.path.join(self.core_root, base+'.system')
             if os.path.exists(system_file):
                 self.system = System(system_file)
         else:
@@ -316,17 +318,3 @@ class Core:
                     print("  {} {} {}".format(f.name.ljust(_longest_name),
                                               f.file_type.ljust(_longest_type),
                                               f.is_include_file))
-
-def splitNameString(name):
-    (fullname,at,version) = name.partition("@")
-    (vendor,colon,library) = fullname.partition(":")
-    if library:
-        (library,colon,corename) = library.partition(":")
-        if not corename:
-            corename = library
-            library = ""
-    else:
-        corename = vendor
-        vendor = ""
-        library = ""
-    return (vendor,library,corename,version)
