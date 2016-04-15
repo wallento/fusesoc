@@ -38,7 +38,7 @@ class Simulator(EdaTool):
 
             if core.vpi:
                 vpi_module = {}
-                core_root = os.path.join(self.src_root, core_name)
+                core_root = os.path.join(self.src_root, core.sanitized_name)
                 vpi_module['include_dirs']  = [os.path.abspath(os.path.join(core_root, d)) for d in core.vpi.include_dirs]
                 vpi_module['src_files']     = [os.path.abspath(os.path.join(core_root, f.name)) for f in core.vpi.src_files]
                 vpi_module['name']          = core.name
@@ -50,7 +50,7 @@ class Simulator(EdaTool):
         src_files = []
         for core_name in self.cores:
             core = self.cm.get_core(core_name)
-            basepath = os.path.relpath(os.path.join(self.src_root, core_name), self.sim_root)
+            basepath = os.path.relpath(os.path.join(self.src_root, core.sanitized_name), self.sim_root)
             for fs in core.file_sets:
                 if (set(fs.usage) & set(usage)) and ((core_name == self.system.name) or not fs.private):
                     for file in fs.file:
