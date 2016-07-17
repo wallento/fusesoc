@@ -70,7 +70,7 @@ class Core:
             else:
                 self.name = basename.split('.core')[0]
 
-            self.sanitized_name = self.name
+            self.sanitized_name = self.name.replace(":", "_")
 
             self.depend     = self.main.depend
             self.simulators = self.main.simulators
