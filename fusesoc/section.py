@@ -337,14 +337,14 @@ class XsimSection(ToolSection):
     def __init__(self, items=None):
         super(XsimSection, self).__init__()
 
-        self._add_member('xsim_options', StringList, "Extra Xsim compile options")
+        self._add_member('top_module' , str, 'verilog top-level module')
 
         if items:
             self.load_dict(items)
 
     def __str__(self):
         s = super(XsimSection, self).__str__()
-        if self.xsim_options: s += "Xsim compile options : {}\n".format(' '.join(self.xsim_options))
+        if self.top_module: s += "top module : {}\n".format(' '.join(self.top_module))
         return s
 
 class VerilatorSection(ToolSection):
