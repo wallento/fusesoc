@@ -65,7 +65,9 @@ class Xsim(Simulator):
         path = os.path.join(self.work_root, filename)
         tcl_file = open(path, 'w')
 
-        ipconfig = '\n'.join(['read_ip '+s for s in ip])
+        ipconfig = '\n'.join(['read_ip '+s for s in ip])+"\n"
+        ipconfig += "upgrade_ip [get_ips]\n"
+        ipconfig += "generate_target all [get_ips]\n"
 
         parameters = ""
         for key, value in self.vlogparam.items():
