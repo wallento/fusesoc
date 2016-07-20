@@ -13,7 +13,6 @@ class Xsim(Simulator):
 
         self.top_module = None
         self.part = None
-        self.dpi_srcs = []
 
         if system.xsim is not None:
             self.top_module = system.xsim.top_module
@@ -113,6 +112,9 @@ class Xsim(Simulator):
         if self._has_dpi():
             args = ['-C', 'gcc', '-v' ]
             args += ['-additional_option', '-std=c++11' ]
+            for l in self.dpi_libs:
+                args += ['--additional_option']
+                args += ['-l'+l]
             for src in self.dpi_srcs:
                 args.append(os.path.join(self.work_root, src))
 
