@@ -34,6 +34,10 @@ class Xsim(Simulator):
         return (len(self.dpi_srcs) > 0)
 
     def _write_config_files(self):
+        if self.top_module is None:
+            pr_err("No top_module set for this simulation")
+            exit(1)
+
         ip = []         # IP descriptions (xci files)
         constr = []     # Constraints (xdc files)
         verilog = []    # (System) Verilog files
