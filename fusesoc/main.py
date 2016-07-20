@@ -270,6 +270,8 @@ def run(args):
     if os.getenv("FUSESOC_CORES"):
         env_cores_root = os.getenv("FUSESOC_CORES").split(":")
 
+    env_cores_root.reverse()
+
     for cores_root in [args.cores_root,
                        env_cores_root,
                        config.cores_root,
