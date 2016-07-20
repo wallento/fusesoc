@@ -338,6 +338,7 @@ class XsimSection(ToolSection):
         super(XsimSection, self).__init__()
 
         self._add_member('top_module' , str, 'verilog top-level module')
+        self._add_member('part', str, 'FPGA part')
 
         if items:
             self.load_dict(items)
@@ -345,6 +346,7 @@ class XsimSection(ToolSection):
     def __str__(self):
         s = super(XsimSection, self).__str__()
         if self.top_module: s += "top module : {}\n".format(' '.join(self.top_module))
+        if self.part: s += "part : {}\n".format(' '.join(self.part))
         return s
 
 class VerilatorSection(ToolSection):

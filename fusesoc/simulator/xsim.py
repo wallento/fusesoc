@@ -12,10 +12,12 @@ class Xsim(Simulator):
         super(Xsim, self).__init__(system)
 
         self.top_module = None
+        self.part = None
         self.dpi_srcs = []
 
         if system.xsim is not None:
             self.top_module = system.xsim.top_module
+            self.part = system.xsim.part
 
         if self.top_module == '':
             raise OptionSectionMissing('top_module')
@@ -73,11 +75,16 @@ class Xsim(Simulator):
         for key, value in self.vlogparam.items():
             parameters += "set_property generic {{{key}={value}}} [current_fileset -simset]".format(key=key, value=value)
 
+        part = ""
+        if self.part:
+            part = " -part {} ".format(self.part)
+
         tcl_file.write(PROJECT_TCL_TEMPLATE.format(
             design       = self.system.sanitized_name,
             toplevel     = self.top_module,
             incdirs      = ' '.join(self.incdirs),
             parameters   = parameters,
+            part         = part,
             ip           = ipconfig,
             src_files    = '\n'.join(['read_verilog '+s for s in verilog]+
                                      ['read_vhdl '+s for s in vhdl])))
@@ -136,7 +143,7 @@ class Xsim(Simulator):
 """ Template for vivado project tcl file """
 PROJECT_TCL_TEMPLATE = """# Auto-generated project tcl file
 
-create_project {design}
+create_project {design} {part}
 
 set_property "simulator_language" "Mixed" [current_project]
 
