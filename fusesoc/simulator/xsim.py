@@ -51,8 +51,6 @@ class Xsim(Simulator):
                 ip.append(s.name)
             elif s.file_type == 'xdc':
                 constr.append(s.name)
-            elif s.file_type == 'ipTcl':
-                ip_scripts.append(s.name)
             elif s.file_type.startswith('verilogSource'):
                 verilog.append(s.name)
             elif s.file_type.startswith('systemVerilogSource'):
@@ -90,7 +88,7 @@ class Xsim(Simulator):
 
         if self._has_dpi():
             tcl_file.write("set_property -name {xsim.elaborate.xelab.more_options} "
-                           "-value {-cc gcc -sv_lib dpi} "
+                           "-value {-cc gcc -sv_lib dpi } "
                            "-objects [current_fileset -simset]\n")
 
         tcl_file.write("launch_simulation -scripts_only")

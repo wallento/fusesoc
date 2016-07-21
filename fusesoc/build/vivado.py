@@ -53,14 +53,47 @@ class Vivado(Backend):
         # Get the synthesis files and files specific to vivado
         (src, incdirs) = self._get_fileset_files(['vivado', 'synth'])
 
+        ip = []         # IP descriptions (xci files)
+        constr = []     # Constraints (xdc files)
+        verilog = []    # (System) Verilog files
+        vhdl = []       # VHDL files
+
+        for s in src:
+            if s.file_type == 'xci':
+                ip.append(s.name)
+            elif s.file_type == 'xdc':
+                constr.append(s.name)
+            elif s.file_type.startswith('verilogSource'):
+                verilog.append(s.name)
+            elif s.file_type.startswith('systemVerilogSource'):
+                verilog.append(s.name)
+            elif s.file_type.startswith('vhdlSource'):
+                vhdl.append(s.name)
+
         tcl_file = open(os.path.join(self.work_root, self.system.sanitized_name+".tcl"), 'w')
 
-        tcl_file.write(get_tcl_base(self.work_root, self.system, src, incdirs))
+        ipconfig = '\n'.join(['read_ip '+s for s in ip])+"\n"
+        ipconfig += "upgrade_ip [get_ips]\n"
+        ipconfig += "generate_target all [get_ips]\n"
+
+        parameters = ""
+        for key, value in self.vlogparam.items():
+            parameters += "set_property generic {{{key}={value}}} [current_fileset -simset]".format(key=key, value=value)
+
+        # Write the formatted string to the tcl file
         tcl_file.write(PROJECT_TCL_TEMPLATE.format(
-            bitstream    = os.path.join(self.work_root, self.system.name+'.bit')))
+            design       = self.system.sanitized_name,
+            part         = self.system.system.backend.part,
+            bitstream    = os.path.join(self.work_root, self.system.sanitized_name+'.bit'),
+            incdirs      = ' '.join(incdirs),
+            ip           = ipconfig,
+            parameters   = parameters,
+            src_files    = '\n'.join(['read_verilog '+s for s in verilog]+
+                                     ['read_vhdl '+s for s in vhdl]),
+            xdc_files    = '\n'.join(['read_xdc '+s for s in constr])))
 
         tcl_file.close()
-        
+
     """ Execute the build
 
     This launches the actual build of the vivado project by executing the project
@@ -73,7 +106,7 @@ class Vivado(Backend):
                                   os.path.join(self.work_root, self.system.sanitized_name+'.tcl')],
                        cwd = self.work_root,
                        errormsg = "Failed to build FPGA bitstream").run()
-        
+
         super(Vivado, self).done()
 
     """ Program the FPGA
@@ -99,59 +132,23 @@ class Vivado(Backend):
         tcl_file.close()
 
 
-def get_tcl_base(work_root, system, src, incdirs):
-    ip = []         # IP descriptions (xci files)
-    ip_scripts = [] 
-    constr = []     # Constraints (xdc files)
-    verilog = []    # (System) Verilog files
-    vhdl = []       # VHDL files
-    
-    for s in src:
-        if s.file_type == 'xci':
-            ip.append(s.name)
-        elif s.file_type == 'xdc':
-            constr.append(s.name)
-        elif s.file_type == 'ipTcl':
-            ip_scripts.append(s.name)
-        elif s.file_type.startswith('verilogSource'):
-            verilog.append(s.name)
-        elif s.file_type.startswith('systemVerilogSource'):
-            verilog.append(s.name)
-        elif s.file_type.startswith('vhdlSource'):
-            vhdl.append(s.name)
-
-    # Write the formatted string to the tcl file
-    return PROJECT_TCL_BASICTEMPLATE.format(
-        design       = system.sanitized_name,
-        part         = system.system.backend.part,
-        bitstream    = os.path.join(work_root, system.name+'.bit'),
-        incdirs      = ' '.join(incdirs),
-        ip_files     = '\n'.join(['read_ip '+s for s in ip]),
-        ip_scripts   = '\n'.join(['source '+s for s in ip_scripts]),
-        genip        = "generate_target all [get_ips]" if (len(ip + ip_scripts) > 1) else "",
-        src_files    = '\n'.join(['read_verilog '+s for s in verilog]+
-                                 ['read_vhdl '+s for s in vhdl]),
-        xdc_files    = '\n'.join(['read_xdc '+s for s in constr]))
-
 """ Template for vivado project tcl file """
-PROJECT_TCL_BASICTEMPLATE = """# Auto-generated project tcl file
+PROJECT_TCL_TEMPLATE = """# Auto-generated project tcl file
 
 create_project -part {part} {design}
 
 set_property "simulator_language" "Mixed" [current_project]
 
-{ip_files}
-{ip_scripts}
-{genip}
+{ip}
 
 {src_files}
+
+{parameters}
 
 set_property include_dirs [list {incdirs}] [current_fileset]
 
 {xdc_files}
-"""
 
-PROJECT_TCL_TEMPLATE = """
 regexp -- {{Vivado v([0-9]{{4}})\.[0-9]}} [version] -> year
 
 create_run -name synthesis -flow "Vivado Synthesis $year" -strategy "Vivado Synthesis Defaults"
