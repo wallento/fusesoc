@@ -8,10 +8,9 @@ setup(
     name = "fusesoc",
     packages=['fusesoc',
               'fusesoc.build',
-              'fusesoc.ipyxact',
               'fusesoc.simulator',
               'fusesoc.provider'],
-    version = "1.4",
+    version = "1.5",
     author = "Olof Kindgren",
     author_email = "olof.kindgren@gmail.com",
     description = ("FuseSoC is a package manager and a set of build tools for HDL (Hardware Description Language) code."),
@@ -31,6 +30,6 @@ setup(
         ]
     },
     install_requires=[
-          'pyyaml',
+          'ipyxact>=0.2.3',
     ],
 )
