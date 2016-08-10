@@ -127,7 +127,7 @@ class Xsim(Simulator):
         super(Xsim, self).run(args)
 
         simtcl = os.path.join(self.simcwd, self.top_module + ".tcl")
-        print simtcl
+        print(simtcl)
         tcl_file = open(simtcl, "w")
 
         tcl_file.write("run -all")

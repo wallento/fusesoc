@@ -126,8 +126,8 @@ class Vivado(Backend):
     def _write_program_tcl_file(self, program_tcl_filename):
         tcl_file = open(program_tcl_filename, 'w')
         tcl_file.write(PROGRAM_TCL_TEMPLATE.format(
-            bitstream    = os.path.join(self.work_root, self.system.name+'.bit'),
-            hw_device = self.system.backend.hw_device
+            bitstream    = os.path.join(self.work_root, self.system.sanitized_name+'.bit'),
+            hw_device = self.system.system.backend.hw_device
         ))
         tcl_file.close()
 
