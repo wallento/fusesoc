@@ -116,7 +116,7 @@ class Vivado(Backend):
     executed in Vivado's batch mode.
     """
     def pgm(self, remaining):
-        tcl_file_name = os.path.join(self.work_root, self.system.name+"_pgm.tcl")
+        tcl_file_name = os.path.join(self.work_root, self.system.sanitized_name+"_pgm.tcl")
         self._write_program_tcl_file(tcl_file_name)
         utils.Launcher('vivado', ['-mode', 'batch', '-source', tcl_file_name ],
                        cwd = self.work_root,
