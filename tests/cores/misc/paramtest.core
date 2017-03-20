@@ -54,3 +54,9 @@ datatype  = str
 description = string verilog plusarg
 paramtype = plusarg
 scope = public
+
+[parameter cmdlinearg_bool]
+datatype  = bool
+description = boolean verilog cmdlinearg
+paramtype = cmdlinearg
+scope = public
