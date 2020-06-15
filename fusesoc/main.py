@@ -11,6 +11,11 @@ import signal
 
 from fusesoc import __version__
 
+
+class ExitException(Exception):
+    pass
+
+
 # Check if this is run from a local installation
 fusesocdir = os.path.abspath(
     os.path.join(os.path.dirname(os.path.realpath(__file__)), "..")
@@ -42,7 +47,7 @@ def _get_core(cm, name):
         core = cm.get_core(Vlnv(name))
     except RuntimeError as e:
         logger.error(str(e))
-        exit(1)
+        raise ExitException
     except DependencyError as e:
         logger.error(
             "'"
@@ -51,7 +56,7 @@ def _get_core(cm, name):
             + e.value
             + "', but this core was not found"
         )
-        exit(1)
+        raise ExitException
     return core
 
 
@@ -121,7 +126,7 @@ def fetch(cm, args):
         core.setup()
     except RuntimeError as e:
         logger.error("Failed to fetch '{}': {}".format(core.name, str(e)))
-        exit(1)
+        raise ExitException
 
 
 def init(cm, args):
@@ -139,7 +144,7 @@ def init(cm, args):
 
     if os.path.exists(config_file):
         logger.warning("'{}' already exists. Aborting".format(config_file))
-        exit(1)
+        raise ExitException
         # TODO. Prepend cores_root to file if it doesn't exist
         f = open(config_file, "w+")
     else:
@@ -176,7 +181,7 @@ def init(cm, args):
                 config.add_library(library)
             except RuntimeError as e:
                 logger.error("Init failed: " + str(e))
-                exit(1)
+                raise ExitException
     logger.info("FuseSoC is ready to use!")
 
 
@@ -233,7 +238,7 @@ def add_library(cm, args):
         config.add_library(library)
     except RuntimeError as e:
         logger.error("`add library` failed: " + str(e))
-        exit(1)
+        raise ExitException
 
 
 def library_list(cm, args):
@@ -273,7 +278,7 @@ def list_cores(cm, args):
             logger.error("No cores found in any library")
         else:
             logger.error("No libraries registered")
-        exit(1)
+        raise ExitException
     maxlen = max(map(len, cores.keys()))
     print("Core".ljust(maxlen) + "   Cache status")
     print("=" * 80)
@@ -341,7 +346,7 @@ def run(cm, args):
         do_run = True
     elif stages == (True, False, True):
         logger.error("Configure and run without build is invalid")
-        exit(1)
+        raise ExitException
     else:
         do_configure = args.setup
         do_build = args.build
@@ -390,10 +395,10 @@ def run_backend(
         tool = core.get_tool(flags)
     except SyntaxError as e:
         logger.error(str(e))
-        exit(1)
+        raise ExitException
     if not tool:
         logger.error(tool_error.format(system))
-        exit(1)
+        raise ExitException
     flags["tool"] = tool
     build_root = build_root_arg or os.path.join(
         cm.config.build_root, core.name.sanitized_name
@@ -405,9 +410,10 @@ def run_backend(
         export_root = None
     try:
         work_root = os.path.join(build_root, core.get_work_root(flags))
+        logger.info("work_root: {}".format(work_root))
     except SyntaxError as e:
         logger.error(e.msg)
-        exit(1)
+        raise ExitException
     eda_api_file = os.path.join(work_root, core.name.sanitized_name + ".eda.yml")
     if not os.path.exists(eda_api_file):
         do_configure = True
@@ -433,10 +439,10 @@ def run_backend(
 
         except SyntaxError as e:
             logger.error(e.msg)
-            exit(1)
+            raise ExitException
         except RuntimeError as e:
             logger.error("Setup failed : {}".format(str(e)))
-            exit(1)
+            raise ExitException
         edalizer.to_yaml(eda_api_file)
     else:
         edam = yaml_fread(eda_api_file)
@@ -449,13 +455,13 @@ def run_backend(
 
     except ImportError:
         logger.error('Backend "{}" not found'.format(tool))
-        exit(1)
+        raise ExitException
     except RuntimeError as e:
         logger.error(str(e))
-        exit(1)
+        raise ExitException
     except FileNotFoundError as e:
         logger.error('Could not find EDA API file "{}"'.format(e.filename))
-        exit(1)
+        raise ExitException
 
     if do_configure:
         try:
@@ -464,21 +470,21 @@ def run_backend(
         except RuntimeError as e:
             logger.error("Failed to configure the system")
             logger.error(str(e))
-            exit(1)
+            raise ExitException
 
     if do_build:
         try:
             backend.build()
         except RuntimeError as e:
             logger.error("Failed to build {} : {}".format(str(core.name), str(e)))
-            exit(1)
+            raise ExitException
 
     if do_run:
         try:
             backend.run(parsed_args)
         except RuntimeError as e:
             logger.error("Failed to run {} : {}".format(str(core.name), str(e)))
-            exit(1)
+            raise ExitException
 
 
 def sim(cm, args):
@@ -550,7 +556,7 @@ def init_coremanager(config, args_cores_root):
     return cm
 
 
-def parse_args():
+def get_parser():
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers()
 
@@ -809,7 +815,12 @@ def parse_args():
         warn="'fusesoc update' is deprecated. Use 'fusesoc library update' instead"
     )
 
-    args = parser.parse_args()
+    return parser
+
+
+def parse_args(args):
+    parser = get_parser()
+    args = parser.parse_args(args)
 
     if hasattr(args, "func"):
         return args
@@ -819,10 +830,11 @@ def parse_args():
         parser.print_help()
         return None
 
+    return args
 
-def main():
 
-    args = parse_args()
+def main(args=sys.argv[1:]):
+    args = parse_args(args)
     if not args:
         exit(0)
 
@@ -833,8 +845,13 @@ def main():
 
     cm = init_coremanager(config, args.cores_root)
     # Run the function
-    args.func(cm, args)
+    try:
+        args.func(cm, args)
+    except ExitException:
+        return 1
+
+    return 0
 
 
 if __name__ == "__main__":
-    main()
+    exit(main())
